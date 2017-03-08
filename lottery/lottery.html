@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<style type="text/css">
+	  body {
+            padding: 20px 0;
+        }
+
+        .container {
+            border: 3px solid yellow;
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -o-user-select: none;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas {
+            position: absolute;
+            top: 0;
+            z-index: 100;
+        }
+
+        .result {
+            font-size: 20px;
+            font-size: 800;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%,-50%);
+        }
+</style>
+<body>
+	<div class="container">
+        <canvas class="canvas" width="300" height="300"></canvas>
+        <div class="result">恭喜你获取前端开发实习生offer</div>
+    </div>
+</body>
+
+	<script type="text/javascript">
+		(function() {
+			var canvas = document.getElementsByTagName('canvas')[0];
+			var ctx = canvas.getContext('2d');
+			var width = canvas.width;
+			var height = canvas.height;
+
+			ctx.fillRect(0,0,width,height);
+
+			canvas.addEventListener('mousedowm',handleMouseDown, false);
+			canvas.addEventListener('mouseup',handleMouseUp, false);
+			canvas.addEventListener('mousemove',handleMouseMove, false);
+			canvas.addEventListener('touchstart',handleMouseDown, false);
+			canvas.addEventListener('touchmove',handleMouseMove, false);
+			canvas.addEventListener('touchend',handleMouseUp, false);
+
+			function distanceCalc(point1,  point2) {
+				return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2))
+			}
+
+			function directionCalc(point1, point2) {
+				return Math.atan2(point2.x - point1.x, point2.y - point1.y);
+			}
+
+			function getMouse(e, canvas) {
+				var k = canvas;
+				var offTop = 0, offLeft = 0, mx, my;
+				while(k.offsetParent != null) {
+					offTop += k.offsetTop;
+					offLeft += k.offsetLeft;
+					k = k.offsetParent;
+				}
+
+				mx = (e.pageX || e.touches[0].clientX) - offLeft;
+				my = (e.pageY || e.touches[0].clientY) - offTop;
+
+				return {x:mx, y:my}
+			}
+
+			function handleMouseDown(e) {
+				isDrawing  = true;
+				lastPoint = getMouse(e, canvas);
+			}
+
+			function drawImage(x,y) {
+				ctx.beginPath();
+				ctx.arc(x, y, 20, 0 ,2 * Math.PI);
+				ctx.closePath();
+				ctx.fillStyle = 'white';
+				ctx.fill();
+
+			}
+			function handlePercentage(filledInPixels) {
+		        filledInPixels = filledInPixels || 0;
+		        console.log(filledInPixels + '%');
+		        if (filledInPixels > 50) {
+		        	console.log(canvas.parentNode)
+		            canvas.parentNode.removeChild(canvas);
+		        }
+		    }
+			function handleMouseMove(e) {
+				if(!isDrawing) {
+					return;
+				}
+
+				e.preventDefault();
+
+				var currentPoint = getMouse(e, canvas),
+					dist = distanceCalc(lastPoint, currentPoint),
+					angle = directionCalc(lastPoint, currentPoint),
+					x,y;
+
+				for(var i = 0; i < dist; i++) {
+					x = lastPoint.x + (Math.sin(angle) * i);
+					y = lastPoint.y + (Math.cos(angle) * i);
+					ctx.globalCompositeOperation = "destination-out";
+					drawImage(x,y);
+				}	
+				lastPoint = currentPoint;
+				// handlePercentage(getPixels(32));
+			}
+
+			function getPixels(stride) {
+				if (!stride || stride < 1) { stride = 1; }
+
+        		var pixels   = ctx.getImageData(0, 0, width, height),
+            		pdata    = pixels.data,
+            		len      = pdata.length,
+            		count    = 0;
+
+			    for(var i = 0; i < len; i += stride) {
+			        if (parseInt(pdata[i]) === 0) {
+			            count++;
+			        }
+			    }
+		
+			    return Math.round(((count * stride) / len) * 100);
+			}
+
+			function handleMouseUp(e) {
+				isDrawing = false;
+			}
+	
+		})();
+	</script>
+</html>
